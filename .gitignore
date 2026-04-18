@@ -14,3 +14,9 @@ __pycache__/
 # dataset
 *.csv
 
+#docs
+docs/
+
+
+# Models
+*pickle
