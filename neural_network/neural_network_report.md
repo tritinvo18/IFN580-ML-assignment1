@@ -162,15 +162,13 @@ So, my estimated contribution to Tasks 1-4 was about one third of the total grou
 | Neural Network (full) | 50 | 91.19% | 86.06% | +5.13% | 0.8601 | 0.9292 |
 | Neural Network (reduced) | 2 | 90.32% | 90.24% | +0.08% | 0.9024 | 0.9451 |
 
-The reduced neural network was the strongest model I developed. It achieved the highest AUC among all compared models (0.9451) and the highest weighted F1 score (0.9024), tied with the tuned decision tree. Its test accuracy was 90.24% with only 2 input variables, and the train-test gap was just 0.08%, which suggests good generalisation.
+The reduced neural network is the most powerful model I developed. It had the highest AUC among all compared models(0.9451) and the highest weighted F1 score (0.9024), tied with the tuned decision tree. Its test accuracy was 90.24% with only 2 input variables, and the train-test gap was just 0.08%.
 
-The full neural network had a good AUC of 0.9292, but its test accuracy was lower at 86.06% and the train-test gap was larger at 5.13%. The weighted F1 score was also lower at 0.8601. This suggests that the full neural network had some overfitting compared with the reduced neural network. The main limitation of the neural network solution is that it is less interpretable than decision trees and requires more tuning effort.
-
-
+The full neural network had a good AUC of 0.9292, but its test accuracy was 86.06% and the train-test gap was  5.13%. The weighted F1 score was also low, which is 0.8601. This maybe suggests that the full neural network had some overfitting compared with the reduced neural network. The main limitation of the neural network solution is that it is less interpretable than decision trees and requires more tuning effort.
 
 3. **Identify the best-performing model or solution** that you developed. Discuss its key characteristics and analyse the features that are most likely to result in paddy yield exceeding the mean per hectare, as indicated by your model.
 
-The best-performing model I developed was the reduced neural network. It achieved a test accuracy of 90.24% and the highest AUC among the compared models, 0.9451. It also had a very small train-test accuracy gap of 0.08%, suggesting that it generalised well to the test data.
+The best-performing model I developed was the reduced neural network. It achieved a test accuracy of 90.24% and the highest AUC among the compared models, 0.9451. It also had a very small train-test accuracy gap of 0.08%. These all show the better perfomance.
 
 | Item | Value |
 |---|---|
