@@ -1,118 +1,195 @@
 # Task 4. Neural Networks
 
-## 4.1 Additional Processing for Neural Network Modelling
+## 4.1 Describe what additional processing was required on this dataset to be used for neural network modelling
 
-Neural networks require all input variables to be numeric and are sensitive to the scale of the input features. Therefore, categorical variables were converted into numeric dummy variables, missing numeric values were imputed, and continuous numeric variables were standardised before fitting the `MLPClassifier`. The target variable was `isAboveAvg`, where 1 means the paddy yield per hectare is above the dataset mean and 0 means it is not.
+The general preprocessing steps, including missing-value imputation, target creation, removal of noisy columns, one-hot encoding, and high-correlation removal, were completed in Task 1. The additional preprocessing for neural network modelling focused on preparing the already-cleaned feature matrix for `MLPClassifier`.
 
-| Processing step | Variables affected | Purpose |
+Neural networks require numeric inputs and are sensitive to feature scale because training uses gradient-based optimisation. Therefore, the continuous numeric variables were standardised, while the one-hot encoded dummy variables were kept as 0/1 values.
+
+| Neural network preprocessing | Implementation in this study | Why it was needed |
 |---|---|---|
-| One-hot encoding | `Agriblock`, `Variety`, `Soil Types`, `Nursery`, wind direction variables | Converted categorical inputs into numeric dummy variables |
-| Median imputation | `Min temp_D1_D30`, `Min temp_D31_D60`, `Min temp_D61_D90`, `Min temp_D91_D120` | Filled missing numeric values using a robust central value |
-| High-correlation removal | Variables with pairwise correlation greater than 0.98 | Removed redundant inputs before modelling |
-| Standardisation | Continuous numeric variables | Put numeric inputs on a comparable scale for neural network training |
-| Binary dummy handling | One-hot encoded variables | Kept as 0/1 because these variables were already on a consistent scale |
-| Train/test split | Full processed dataset | Used a 75% training and 25% testing split with `stratify=y` |
-
-The scaler was fitted on the training data only and then applied to the test data. This avoids data leakage from the test set into the training process.
+| Use the cleaned numeric feature matrix from Task 1 | The neural network used the already one-hot encoded and correlation-filtered predictors from Task 1 | `MLPClassifier` requires numeric input variables |
+| Standardise continuous numeric variables | Non-binary numeric variables such as rainfall, temperature, humidity, seed rate, fertiliser, and pesticide variables were scaled with `StandardScaler` | Neural networks use gradient-based optimisation, so scaling prevents large-scale variables from dominating weight updates |
+| Keep dummy variables as 0/1 and avoid leakage | One-hot encoded variables were kept as binary values; the scaler was fitted on `X_train` only and then applied to `X_test` | Dummy variables are already on a consistent scale, and fitting the scaler only on training data prevents test-set leakage |
 
 ## 4.2 Full Neural Network Tuned with GridSearchCV
 
-The first neural network used the full processed input set after preprocessing and high-correlation removal. This produced 50 input variables. The model function was `MLPClassifier`, using the `adam` solver, `max_iter=1000`, `early_stopping=True`, and `n_iter_no_change=20`.
+### 4.2.1 Explain the parameters in building this model, e.g., network architecture, iterations, activation function, etc. Explain your choice of hyperparameters to search, and the chosen search range(s)?
 
-GridSearchCV was used to tune the model because neural networks are sensitive to hyperparameters such as hidden-layer size, activation function, regularisation strength, and learning rate. The search used classification accuracy as the scoring metric.
+Full neural network used all features as input, which is nearly 50 input variables. The model function was `MLPClassifier`, using the `adam` solver, `max_iter=1000`, `early_stopping=True`, and `n_iter_no_change=20`.
 
-| Hyperparameter | Search values | Reason |
-|---|---|---|
+GridSearchCV was used to tune the model because neural networks are sensitive to hyperparameters such as hidden-layer size, activation function, regularisation strength, and learning rate.
+
+| Hyperparameter       | Search values                | Reason                                                       |
+| -------------------- | ---------------------------- | ------------------------------------------------------------ |
 | `hidden_layer_sizes` | `(25,)`, `(50,)`, `(50, 25)` | Tested one smaller layer, one medium layer, and a two-layer architecture |
-| `activation` | `relu`, `tanh` | Compared two common nonlinear activation functions |
-| `alpha` | `0.0001`, `0.001`, `0.01` | Tested different L2 regularisation strengths to control overfitting |
-| `learning_rate_init` | `0.001`, `0.01` | Compared a stable default learning rate with a faster larger learning rate |
+| `activation`         | `relu`, `tanh`               | Compared two common nonlinear activation functions           |
+| `alpha`              | `0.0001`, `0.001`, `0.01`    | Tested different L2 regularisation strengths to control overfitting |
+| `learning_rate_init` | `0.001`, `0.01`              | Compared a stable default learning rate with a faster larger learning rate |
 
-The main full neural network selected by the 10-fold GridSearchCV used the following settings:
+The activation functions tested were `relu` and `tanh`. `relu` was included because it is commonly used and trains efficiently in hidden layers, while `tanh` was included as an alternative nonlinear activation for comparison. The model was allowed to train for up to 1000 iterations, but early stopping was used so training stopped when t he performance is no longer improved.
 
-| Item | Value |
-|---|---|
-| Model | `MLPClassifier` |
-| Input variables | 50 |
-| Best hidden-layer architecture | `(50, 25)` |
-| Best activation | `relu` |
-| Best alpha | `0.01` |
-| Best learning rate init | `0.01` |
-| Best CV accuracy | `0.8909` |
-| Training accuracy | `0.9137` |
-| Test accuracy | `0.8965` |
-| Train-test accuracy gap | `0.0173` |
-| AUC | `0.9360` |
-| Iterations used | 48 |
+### 4.2.2 What is the classification accuracy of the training and test datasets?
 
-The model stopped after 48 iterations, well before `max_iter=1000`, because early stopping was enabled. This indicates that training stopped once validation performance stopped improving. The train-test accuracy gap was 0.0173, so the full neural network did not show strong evidence of overfitting in the main run, although the training accuracy was higher than the test accuracy.
+The full neural network used the following settings and had following performance:
+
+| Item                           | Value           |
+| ------------------------------ | --------------- |
+| Model                          | `MLPClassifier` |
+| Input variables                | 50              |
+| Best hidden-layer architecture | `(50, 25)`      |
+| Best activation                | `relu`          |
+| Best alpha                     | `0.01`          |
+| Best learning rate init        | `0.01`          |
+| Training accuracy              | `0.9119`        |
+| Test accuracy                  | `0.8606`        |
+| Train-test accuracy gap        | `0.0513`        |
+| AUC                            | `0.9292`        |
+| Iterations used                | 51              |
+
+
+
+### 4.2.3 Did the training process converge and result in the best model?
+
+Yes, this full neural network stopped after 51 iterations, before reaching `max_iter=1000`. Since `early_stopping=True` was used, which means the training process stopped when the performance is no longer improved. And GridSearchCV selected the best estimator as well.
+
+![](./images/4.2.3.png)
+
+And the GridSearchCV outcome shows as:
+
+![](./images/gridSearchCV.png)
+
+### 4.2.4 Do you see any sign of over-fitting?
+
+The train-test accuracy gap was 0.0513, so the full neural network showed some evidence of overfitting. The training accuracy was higher than the test accuracy, which suggests the model fitted the training data better than unseen test data. However, the gap was not extreme.
 
 ## 4.3 Reduced Feature Neural Network
 
-The second neural network used a reduced feature set selected by the tuned decision tree from Task 2. The tuned decision tree used `criterion='gini'`, `max_depth=5`, `min_samples_leaf=5`, and `min_samples_split=20`. Features with positive decision-tree feature importance were retained. This rule selected 13 input variables.
+### 4.3.1 Did feature selection favour the outcome? Report the changes in the network architecture. What inputs are being used as the network input?
 
-| No. | Selected input variable |
-|---:|---|
-| 1 | `Seedrate(in Kg)` |
-| 2 | `Variety_delux ponni` |
-| 3 | `Variety_ponmani` |
-| 4 | `Relative Humidity_D31_D60` |
-| 5 | `Max temp_D61_D90` |
-| 6 | `Wind Direction_D61_D90_NNW` |
-| 7 | `Wind Direction_D31_D60_NE` |
-| 8 | `51_70DRain(in mm)` |
-| 9 | `Wind Direction_D1_D30_NA` |
-| 10 | `Wind Direction_D61_D90_SW` |
-| 11 | `Nursery_wet` |
-| 12 | `Soil Types_clay` |
-| 13 | `Wind Direction_D31_D60_W` |
+The reduced neural network used features selected from the tuned decision tree in Task 2 using `SelectFromModel`. This reduced the input set from 50 variables to 2 variables: `Urea_40Days` and `Variety_delux ponni`.
 
-Because the reduced model had fewer input variables, the architecture search was smaller than the full model search. The reduced model tested `(10,)`, `(25,)`, and `(25, 10)` as hidden-layer structures, with the same activation, regularisation, and learning-rate options.
+Because fewer input variables were used, the architecture search was changed from `(25,)`, `(50,)`, and `(50, 25)` in the full model to smaller hidden-layer structures in the reduced model.
 
-| Item | Value |
-|---|---|
-| Model | `MLPClassifier` |
-| Input variables | 13 |
-| Feature selection method | Tuned decision tree feature importance |
-| Selection rule | Keep variables with `feature_importances_ > 0` |
-| Best hidden-layer architecture | `(25, 10)` |
-| Best activation | `relu` |
-| Best alpha | `0.001` |
-| Best learning rate init | `0.01` |
-| Best CV accuracy | `0.8914` |
-| Training accuracy | `0.9026` |
-| Test accuracy | `0.8935` |
-| Train-test accuracy gap | `0.0091` |
-| AUC | `0.9416` |
-| Iterations used | 39 |
+| Hyperparameter | Search values | Reason |
+|---|---|---|
+| `hidden_layer_sizes` | `(10,)`, `(25,)`, `(25, 10)` | Tested smaller network structures because the reduced model had only 2 input variables |
+| `activation` | `relu`, `tanh` | Compared two common nonlinear activation functions, the same as the full neural network |
+| `alpha` | `0.0001`, `0.001`, `0.01` | Tested different L2 regularisation strengths to control overfitting |
+| `learning_rate_init` | `0.001`, `0.01` | Compared a stable default learning rate with a faster larger learning rate |
 
-The reduced neural network stopped after 39 iterations, also before reaching `max_iter=1000`. The train-test accuracy gap was 0.0091, which is smaller than the full model gap in the main run. Therefore, the reduced model showed less evidence of overfitting. Feature selection reduced the input space from 50 variables to 13 variables while maintaining similar predictive performance, so it favoured the outcome in terms of simplicity and generalisation stability. However, it did not clearly dominate the full model on every metric because the full model had slightly higher test accuracy in the main run.
+
+### 4.3.2 What is the classification accuracy on the training and test datasets?
+
+The reduced feature neural network used the following settings and had following performance:
+
+| Item                           | Value                                      |
+| ------------------------------ | ------------------------------------------ |
+| Model                          | `MLPClassifier`                            |
+| Input variables                | 2                                          |
+| Feature selection method       | Tuned decision tree with `SelectFromModel` |
+| Selected variables             | `Urea_40Days`, `Variety_delux ponni`       |
+| Best hidden-layer architecture | `(25, 10)`                                 |
+| Best activation                | `relu`                                     |
+| Best alpha                     | `0.0001`                                   |
+| Best learning rate init        | `0.01`                                     |
+| Best CV accuracy               | `0.9032`                                   |
+| Training accuracy              | `0.9032`                                   |
+| Test accuracy                  | `0.9024`                                   |
+| Train-test accuracy gap        | `0.0008`                                   |
+| AUC                            | `0.9451`                                   |
+| Iterations used                | 32                                         |
+
+### 4.3.3 How many iterations are now needed to train this network?
+
+Now the iterations came to 32, outcome showed as follow:
+
+![](./images/4.3.3.png)
+
+Also, the GridSearchCV outcome shows as follow:
+
+![](./images/4.3.3-2.png)
+
+### 4.3.4 Do you see any sign of over-fitting? Did the training process converge and result in the best model?
+
+The reduced neural network did not show strong evidence of overfitting. The training accuracy was 0.9032 and the test accuracy was 0.9024, giving a very small train-test accuracy gap of 0.0008. This gap was much smaller than the full neural network gap, it means the reduced model appeared to generalise better to the test data.
+
+The model stopped after 32 iterations.and since `early_stopping=True` was used, this indicates that training stopped when validation performance no longer improved, and GridSearchCV already selected the best estimator from the searched parameter combinations.
 
 ## 4.4 ROC Curve and Model Comparison
 
-Several neural network runs were tested to check whether changing the cross-validation setting or expanding the hyperparameter search would materially improve performance. All models used `MLPClassifier` with the `adam` solver, `max_iter=1000`, `early_stopping=True`, `n_iter_no_change=20`, and GridSearchCV scored by accuracy.
+The ROC curve was produced for both neural network models on the same test set: the full neural network and the reduced feature neural network. Both models used `MLPClassifier` with the `adam` solver, `max_iter=1000`, `early_stopping=True`, `n_iter_no_change=20`, and GridSearchCV scored by accuracy.
 
-| Run | Model | Inputs | Architecture | Activation | Alpha | CV acc. | Train acc. | Test acc. | Gap | AUC | Iter. |
-|---|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|
-| CV=5 | Full NN | 50 | `(50, 25)` | `relu` | 0.0001 | 0.8919 | 0.9102 | 0.8904 | 0.0198 | 0.9425 | 43 |
-| CV=5 | Reduced NN | 13 | `(25, 10)` | `relu` | 0.001 | 0.8914 | 0.9026 | 0.8935 | 0.0091 | 0.9416 | 39 |
-| CV=10 | Full NN | 50 | `(50, 25)` | `relu` | 0.01 | 0.8909 | 0.9137 | 0.8965 | 0.0173 | 0.9360 | 48 |
-| CV=10 | Reduced NN | 13 | `(25, 10)` | `relu` | 0.001 | 0.8914 | 0.9026 | 0.8935 | 0.0091 | 0.9416 | 39 |
-| CV=10 expanded grid | Full NN | 50 | `(50, 25)` | `tanh` | 0.0001 | 0.8899 | 0.9224 | 0.8828 | 0.0396 | 0.9309 | 69 |
-| CV=10 expanded grid | Reduced NN | 13 | `(25, 10)` | `relu` | 0.01 | 0.8955 | 0.9011 | 0.8889 | 0.0122 | 0.9388 | 36 |
+| Model | Inputs | Architecture | Activation | Alpha | CV acc. | Train acc. | Test acc. | Gap | AUC | Iter. |
+|---|---:|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Full NN | 50 | `(50, 25)` | `relu` | 0.01 | 0.8891 | 0.9119 | 0.8606 | 0.0513 | 0.9292 | 51 |
+| Reduced feature NN | 2 | `(25, 10)` | `relu` | 0.0001 | 0.9032 | 0.9032 | 0.9024 | 0.0008 | 0.9451 | 32 |
 
-Across these runs, test accuracy stayed around 0.88-0.90 and AUC stayed around 0.93-0.94. This suggests that the neural network performance was relatively stable for this dataset. The best test accuracy was 0.8965 from the full neural network with 10-fold CV, while the best AUC was 0.9425 from the full neural network with 5-fold CV. The reduced models were consistently close to the full models despite using only 13 inputs.
 
-The ROC results also show that both the full and reduced neural networks had strong class-separation ability, with AUC values above 0.93. The difference between the full and reduced models was small. This indicates that the decision-tree-selected reduced feature set retained most of the predictive information needed by the neural network.
 
-The expanded hyperparameter search did not consistently improve test performance. In particular, the expanded-grid full neural network had the largest train-test gap, suggesting greater overfitting risk. Therefore, further increasing the search space is unlikely to provide a major improvement without a more systematic validation strategy.
+![](./images/NN_AUC_output.png)
 
-## 4.5 Neural Network Issues
 
-Neural networks can model nonlinear relationships between weather, soil, seed, nursery, and variety variables, but they also introduce several issues. First, they are less interpretable than decision trees or logistic regression because the learned relationships are distributed across hidden-layer weights. This makes it difficult to directly explain why a single prediction was made.
 
-Second, neural networks are sensitive to hyperparameter settings and random initialisation. The results changed slightly when using different CV settings and search ranges, which is why GridSearchCV and early stopping were used. Third, neural networks can overfit when the architecture is too flexible for the dataset. The expanded-grid full model showed this risk with a larger train-test accuracy gap. Finally, neural networks are more computationally expensive than simpler models because they require iterative training and repeated fitting during GridSearchCV.
+The ROC results show that both neural networks had good performance, with Full NN values 0.92 and Reduced NN values 0.94. This shows the reduced feature neural network have a little bit highter performance than full NN. It also had higher test accuracy, 0.9024 compared to 0.8606.
 
-## 4.6 Summary
+The feature selection method used the tuned decision tree from Task 2 with `SelectFromModel`. This selected 2 input variables, `Urea_40Days` and `Variety_delux ponni`. The reduced feature model also had a much smaller train-test gap, which suggests that feature selection helped reduce overfitting and improved generalisation.
 
-The full neural network achieved the highest test accuracy in the main comparison, but the reduced neural network achieved very similar performance using only 13 input variables. Therefore, feature selection was useful for reducing model complexity and improving interpretability, even though it did not clearly outperform the full model on every metric. Overall, the neural network models appear to have reached a stable performance level of about 0.89 accuracy and above 0.93 AUC on this dataset.
+The main issues with using neural networks are interpretability, overfitting risk, computational cost, and hyperparameter sensitivity. Neural networks are harder to interpret than decision trees because their relationships are stored across hidden-layer weights. They can also overfit when too many inputs or too flexible an architecture are used.
+
+
+
+### Task 5. Individual Report (4 marks)
+
+1. **Describe your individual contribution** to the teamwork (Tasks 1–4), clearly indicating your estimated percentage contribution (for either a three-member or two-member team, as applicable).
+
+My contribution to this group assignment was Task 4, the neural network modelling section. I designed the special preprocessing for neural network, built the full `MLPClassifier` model, tuned it with GridSearchCV, created the reduced feature neural network using the Task 2 decision-tree-selected variables, also compared the full and reduced neural network using accuracy and ROC/AUC, and wrote the neural network analysis in the report.
+
+So, my estimated contribution to Tasks 1-4 was about one third of the total group work, mainly through completing and documenting the neural network component.
+
+
+
+2. **Critically evaluate the strengths and limitations** of the solution(s) or model(s) you developed. You may include ROC curves and a summary table of performance metrics to support your analysis, and compare your results with those of other team members (Tasks 1–4 outcomes).
+
+![](./images/ROC_all.png)
+
+| Model | Features | Train Acc | Test Acc | Gap | F1 (weighted) | AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| Decision Tree (default) | 50 | 93.69% | 82.89% | +10.80% | 0.8288 | 0.8775 |
+| Decision Tree (tuned) | 50 | 90.32% | 90.24% | +0.08% | 0.9024 | 0.9439 |
+| Logistic Regression (full) | 50 | 89.51% | 89.10% | +0.41% | 0.8910 | 0.8976 |
+| Logistic Regression (reduced) | 2 | 89.51% | 89.10% | +0.41% | 0.8910 | 0.9052 |
+| Neural Network (full) | 50 | 91.19% | 86.06% | +5.13% | 0.8601 | 0.9292 |
+| Neural Network (reduced) | 2 | 90.32% | 90.24% | +0.08% | 0.9024 | 0.9451 |
+
+The reduced neural network was the strongest model I developed. It achieved the highest AUC among all compared models (0.9451) and the highest weighted F1 score (0.9024), tied with the tuned decision tree. Its test accuracy was 90.24% with only 2 input variables, and the train-test gap was just 0.08%, which suggests good generalisation.
+
+The full neural network had a good AUC of 0.9292, but its test accuracy was lower at 86.06% and the train-test gap was larger at 5.13%. The weighted F1 score was also lower at 0.8601. This suggests that the full neural network had some overfitting compared with the reduced neural network. The main limitation of the neural network solution is that it is less interpretable than decision trees and requires more tuning effort.
+
+
+
+3. **Identify the best-performing model or solution** that you developed. Discuss its key characteristics and analyse the features that are most likely to result in paddy yield exceeding the mean per hectare, as indicated by your model.
+
+The best-performing model I developed was the reduced neural network. It achieved a test accuracy of 90.24% and the highest AUC among the compared models, 0.9451. It also had a very small train-test accuracy gap of 0.08%, suggesting that it generalised well to the test data.
+
+| Item | Value |
+|---|---|
+| Best model developed | Reduced neural network |
+| Test accuracy | 90.24% |
+| AUC | 0.9451 |
+| Train-test gap | 0.08% |
+| Inputs used | `Urea_40Days`, `Variety_delux ponni` |
+| Architecture | `(25, 10)` |
+| Activation | `relu` |
+| Iterations | 32 |
+
+The selected features suggest that the amount of urea applied at 40 days and the `delux ponni` rice variety were the strongest predictive inputs used by my neural network to identify above-average paddy yield per hectare. However, because neural networks are less interpretable than decision trees, these features should be interpreted as important predictive inputs rather than direct causal factors.
+
+
+
+
+4. **Propose a potential improvement strategy** for the developed model(s) to enhance predictive performance and better support data-driven decision-making in future applications.
+
+One improvement strategy would be to use a better process for neural network tuning. In this assignment, GridSearchCV was used with a limited set of hidden-layer sizes, activation functions, regularisation values and learning rates. In future work, the search could be expanded gradually and evaluated with repeated stratified cross-validation to reduce the effect of one random train-test split.
+
+Another improvement would be to test alternative feature selection methods. The reduced neural network used variables selected by the tuned decision tree, which worked well in this dataset. However, future work could compare this with recursive feature elimination, permutation importance, or regularisation-based feature selection to check whether a more stable input set can be found.
