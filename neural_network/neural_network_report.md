@@ -141,7 +141,7 @@ The main issues with using neural networks are interpretability, overfitting ris
 
 ### Task 5. Individual Report (4 marks)
 
-1. **Describe your individual contribution** to the teamwork (Tasks 1–4), clearly indicating your estimated percentage contribution (for either a three-member or two-member team, as applicable).
+1. **Describe your individual contribution to the teamwork (Tasks 1–4), clearly indicating your estimated percentage contribution (for either a three-member or two-member team, as applicable).**
 
 My contribution to this group assignment was Task 4, the neural network modelling section. I designed the special preprocessing for neural network, built the full `MLPClassifier` model, tuned it with GridSearchCV, created the reduced feature neural network using the Task 2 decision-tree-selected variables, also compared the full and reduced neural network using accuracy and ROC/AUC, and wrote the neural network analysis in the report.
 
@@ -149,7 +149,7 @@ So, my estimated contribution to Tasks 1-4 was about one third of the total grou
 
 
 
-2. **Critically evaluate the strengths and limitations** of the solution(s) or model(s) you developed. You may include ROC curves and a summary table of performance metrics to support your analysis, and compare your results with those of other team members (Tasks 1–4 outcomes).
+2. **Critically evaluate the strengths and limitations of the solution(s) or model(s) you developed. You may include ROC curves and a summary table of performance metrics to support your analysis, and compare your results with those of other team members (Tasks 1–4 outcomes).**
 
 ![](./images/ROC_all.png)
 
@@ -166,7 +166,7 @@ The reduced neural network is the most powerful model I developed. It had the hi
 
 The full neural network had a good AUC of 0.9292, but its test accuracy was 86.06% and the train-test gap was  5.13%. The weighted F1 score was also low, which is 0.8601. This maybe suggests that the full neural network had some overfitting compared with the reduced neural network. The main limitation of the neural network solution is that it is less interpretable than decision trees and requires more tuning effort.
 
-3. **Identify the best-performing model or solution** that you developed. Discuss its key characteristics and analyse the features that are most likely to result in paddy yield exceeding the mean per hectare, as indicated by your model.
+3. **Identify the best-performing model or solution that you developed. Discuss its key characteristics and analyse the features that are most likely to result in paddy yield exceeding the mean per hectare, as indicated by your model.**
 
 The best-performing model I developed was the reduced neural network. It achieved a test accuracy of 90.24% and the highest AUC among the compared models, 0.9451. It also had a very small train-test accuracy gap of 0.08%. These all show the better perfomance.
 
@@ -186,7 +186,7 @@ The selected features suggest that the amount of urea applied at 40 days and the
 
 
 
-4. **Propose a potential improvement strategy** for the developed model(s) to enhance predictive performance and better support data-driven decision-making in future applications.
+4. **Propose a potential improvement strategy for the developed model(s) to enhance predictive performance and better support data-driven decision-making in future applications.**
 
 One improvement strategy would be to use a better process for neural network tuning. In this assignment, GridSearchCV was used with a limited set of hidden-layer sizes, activation functions, regularisation values and learning rates. In future work, the search could be expanded gradually and evaluated with repeated stratified cross-validation to reduce the effect of one random train-test split.
 
